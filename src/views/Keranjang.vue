@@ -89,6 +89,39 @@
           </div>
         </div>
       </div>
+      <!-- Form checkout -->
+      <div class="row justify-content-end">
+        <div class="col-md-4">
+          <form class="mt-3" v-on:submit.prevent>
+            <div class="form-group">
+              <label for="nama">Nama : </label>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Masukkan nama pemesan"
+                v-model="pesanan.nama"
+              />
+            </div>
+            <div class="form-group">
+              <label for="noMeja">Nomor Meja</label>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Masukkan nomor meja pemesan"
+                v-model="pesanan.noMeja"
+              />
+            </div>
+
+            <button
+              type="submit"
+              class="btn btn-success float-right"
+              @click="checkOut"
+            >
+              <b-icon-cart></b-icon-cart> Pesan
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -104,6 +137,7 @@ export default {
   data() {
     return {
       keranjangs: [],
+      pesanan: {},
     };
   },
   methods: {
@@ -143,6 +177,47 @@ export default {
         .then(function () {
           // always executed
         });
+    },
+    checkOut() {
+      if (!this.pesanan.nama && !this.pesanan.noMeja) {
+        this.$toast.error("Nama dan nomor meja harus diisi!!", {
+          type: "error",
+          position: "top-right",
+          duration: 3000,
+          dismissible: true,
+        });
+      } else {
+        this.pesanan.keranjangs = this.keranjangs;
+        axios
+          .post("http://localhost:3000/pesanans", this.pesanan)
+          .then(() => {
+            // hapus semua keranjang
+            this.keranjangs.map(function (item) {
+              return axios
+                .delete("http://localhost:3000/keranjangs/" + item.id)
+                .catch((error) => {
+                  // handle error
+                  console.log("Failed: ", error);
+                })
+                .then(function () {
+                  // always executed
+                });
+            });
+            this.resetForm();
+            this.$router.push({ path: "/pesanan-success" });
+            this.$toast.success("Pesanan berhasil diproses", {
+              type: "success",
+              position: "top-right",
+              duration: 3000,
+              dismissible: true,
+            });
+          })
+          .catch((err) => console.log(err));
+      }
+    },
+    resetForm() {
+      this.pesanan.nama = "";
+      this.pesanan.noMeja = "";
     },
   },
   mounted() {
